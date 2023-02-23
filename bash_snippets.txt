@@ -1,0 +1,21 @@
+1. Make directories:
+
+$ mkdir {data,docs,results,scripts,src,tests}
+
+
+2) .gitignore can be initialized to the following:
+$ touch .gitignore
+
+3) create init.py
+$ touch src/__init__.py
+
+4) install custom package
+$ pip install -e .
+
+5) Add packages to requirements.txt  ( add one line: -e .
+$ pip install -r requirements.txt
+
+
+Create new repo folder with structure in one go.
+$ pip install cookiecutter
+$ cookiecutter gh:patrickmineault/true-neutral-cookiecutter

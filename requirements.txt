@@ -11,4 +11,6 @@ torchvision==0.14.1+cu117
 tqdm==4.64.1
 scikit-learn==1.2.1
 setuptools==67.4.0
+black[jupyter]==23.1.0
+pytest==7.2.1
 -e .

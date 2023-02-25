@@ -15,4 +15,6 @@ black[jupyter]==23.1.0
 pytest==7.2.1
 tensorflow==2.11.0
 loguru=0.6.0
+autopep8=2.0.1
+pep8=1.7.1
 -e .

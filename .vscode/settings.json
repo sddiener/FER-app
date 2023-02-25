@@ -7,10 +7,9 @@
     "python.testing.pytestEnabled": true,
     "pytest.command": "/Users/datoux/.virtualenvs/demo-mLN-1lcH/bin/pytest",
     // Formatting
+    "editor.defaultFormatter": "ms-python.autopep8",
     "editor.formatOnSave": true,
-    "python.formatting.provider": "black",
-    "python.formatting.blackArgs": [
-        "--line-length",
-        "120"
-    ],
+    "python.formatting.provider": "none", // "black",
+    "python.formatting.autopep8Args": ["--max-line-length", "120", "--experimental"],
+    //"python.formatting.blackArgs": ["--line-length", "120"],
 }

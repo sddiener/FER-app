@@ -6,7 +6,7 @@ from sklearn.cluster import MiniBatchKMeans
 
 
 def load_data(img_path, label_path, gray=True):
-    ''' Loads images and labels from the path '''
+    """Loads images and labels from the path"""
     # get images
     img_list = []
     img_names = []
@@ -20,39 +20,39 @@ def load_data(img_path, label_path, gray=True):
 
     # create label dict
     label_dict = {}
-    with open(label_path, 'r') as f:
+    with open(label_path, "r") as f:
         for line in f:
-            name = line.strip().split(' ')[0][:-4] + '_aligned.jpg'
-            label = int(line.strip().split(' ')[1])
+            name = line.strip().split(" ")[0][:-4] + "_aligned.jpg"
+            label = int(line.strip().split(" ")[1])
             label_dict[name] = label
 
     # get labels from dict
     label_list = [label_dict[name] for name in img_names]
 
-    return img_list, label_list
+    return np.array(img_list), np.array(label_list)
 
 
 def display_n_images(img_list, label_list, n):
-    ''' Displays n images with their labels '''
+    """Displays n images with their labels"""
     rows = int(n**0.5)
-    cols = int(n/rows)
-    n = rows*cols
+    cols = int(n / rows)
+    n = rows * cols
 
     fig, axs = plt.subplots(rows, cols, figsize=(6, 6))
     ax = axs.ravel()
 
     indices = np.random.choice(len(img_list), n, replace=False)
     for i, idx in enumerate(indices):
-        ax[i].imshow(img_list[idx], cmap='gray')
+        ax[i].imshow(img_list[idx], cmap="gray")
         ax[i].set_title(label_list[idx])
-        ax[i].axis('off')
+        ax[i].axis("off")
     fig.tight_layout()
     plt.show()
 
 
 def create_SIFT_features(img_list, label_list, print_example=False):  # code from labs
-    ''' Creates SIFT features '''
-    print('Creating SIFT features...')
+    """Creates SIFT features"""
+    print("Creating SIFT features...")
     des_list = []
     des_label_list = []
     sift = cv2.SIFT_create()
@@ -77,8 +77,8 @@ def create_SIFT_features(img_list, label_list, print_example=False):  # code fro
 
 
 def cluster_descriptors(des_list, k):
-    ''' Clusters descriptors '''
-    print('Clustering descriptors...')
+    """Clusters descriptors"""
+    print("Clustering descriptors...")
     des_array = np.vstack(des_list)
     batch_size = des_array.shape[0] // 4
     kmeans = MiniBatchKMeans(n_clusters=k, batch_size=batch_size)
@@ -87,8 +87,8 @@ def cluster_descriptors(des_list, k):
 
 
 def convert_des_to_hist(des_list, kmeans, k, plot=True):
-    ''' Converts descriptors to histograms '''
-    print('Converting descriptors to histograms...')
+    """Converts descriptors to histograms"""
+    print("Converting descriptors to histograms...")
     hist_list = []
     idx_list = []
     for des in des_list:
@@ -107,13 +107,12 @@ def convert_des_to_hist(des_list, kmeans, k, plot=True):
     if plot:
         fig, ax = plt.subplots(figsize=(8, 3))
         ax.hist(np.array(idx_list, dtype=object), bins=k)
-        ax.set_title('Codewords occurrence in training set')
+        ax.set_title("Codewords occurrence in training set")
         plt.show()
     return hist_array
 
 
 def convert_test_to_hist(X_test_list, kmeans, k):
-
     hist_list = []
     sift = cv2.SIFT_create()
     for i in range(len(X_test_list)):

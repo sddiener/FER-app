@@ -18,6 +18,59 @@ from pytorch_lightning import LightningModule
 import src.lib as lib
 
 # **********************************************************************************************************************
+# Utils
+# **********************************************************************************************************************
+
+# Get the latest checkpoint
+
+import re
+
+def find_latest_checkpoint(dir_path, model_name) -> str:
+    """
+        This function finds the latest checkpoint file for a given model name in a specified directory path.
+
+        Args:
+        dir_path (str): The directory path where the checkpoint files are stored.
+        model_name (str): The name of the model to find the latest checkpoint for.
+
+        Returns:
+        str: The filename (including extension) of the latest checkpoint file found. If no matching checkpoint file
+          is found, returns an empty string.
+    """
+    checkpoints = [f for f in os.listdir(dir_path) if f.endswith('.ckpt')]
+    checkpoints_v = [f for f in checkpoints if re.match(r'^{}-v\d+.ckpt$'.format(model_name), f)]
+    if checkpoints_v:
+        latest_checkpoint = max(checkpoints_v, key=lambda f: int(re.search(r'\d+', f).group()))
+    else:
+        latest_checkpoint = max(checkpoints)
+    return latest_checkpoint
+
+# **********************************************************************************************************************
+# CONFIG VARIABLES
+# **********************************************************************************************************************
+
+ROOT_DIR = "C:/Users/stefan/Github/FER-app"
+FER_DATA_DIR = "C:/Users/stefan/Github/FER-app/data/ferplus/data"
+CHECKPOINT_NAME = find_latest_checkpoint(dir_path=os.path.join(ROOT_DIR, "results/checkpoints"), model_name="ferplus_litcnn")
+
+DEFAULT_TRAINING_ARGS = {
+    "train_data_dir": f"{FER_DATA_DIR}/FER2013Train",
+    "val_data_dir": f"{FER_DATA_DIR}/FER2013Valid",
+    "test_data_dir": f"{FER_DATA_DIR}/FER2013Test",
+    'ckpt_dir': f"{ROOT_DIR}/results/checkpoints",
+    'model_name': "ferplus_litcnn",
+    "debug": True,
+    "batch_size": 64,
+    "num_dl_workers": 0,
+    "epochs": 1
+}
+ 
+DEFAULT_PREDICTION_ARGS = {
+    'image_path': f"{ROOT_DIR}/data/ferplus/data/FER2013Test/fer0032222.png",
+    'checkpoint_path': f"{ROOT_DIR}/results/checkpoints/{CHECKPOINT_NAME}",
+    "device": "cuda",
+}
+# **********************************************************************************************************************
 # Argument Parsing
 # **********************************************************************************************************************
 
@@ -191,16 +244,17 @@ class FERPlusDataModule(LightningDataModule):
 
 # src: https://pytorch-lightning.readthedocs.io/en/latest/starter/introduction.html
 
-
 class LitCNN(LightningModule):
-    def __init__(self, input_shape, num_classes, lr):
+    def __init__(self, input_shape, num_classes, lr, batch_size=32):
         super().__init__()
         self.input_shape = input_shape  # use the second dimension of input shape as input size
         self.in_channels = input_shape[1]
-        # rest of the constructor code remains the same
-        self.accuracy = torchmetrics.Accuracy(task="multiclass", num_classes=num_classes)
-        self.example_input_array = torch.randn(input_shape)  # for logging (must be batch shape)
+        self.num_classes = num_classes
         self.lr = lr
+        self.batch_size = batch_size
+
+        self.accuracy = torchmetrics.Accuracy(task="multiclass", num_classes=num_classes)
+        self.example_input_array = torch.randn((batch_size,) + input_shape[1:])  # for logging (must be batch shape)
         self.save_hyperparameters()  # save hyperparameters for checkpointing
 
         # CNN block - image size 100*100
@@ -222,14 +276,13 @@ class LitCNN(LightningModule):
         # FC block - image batch size: torch.Size([32, 128, 12, 12])
         self.FC_layers = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(in_features=128 * 6 * 6, out_features=128),  #
+            nn.Linear(in_features=128 * 6 * 6, out_features=128),
             nn.ReLU(),
             nn.Linear(in_features=128, out_features=num_classes),
         )
 
     def forward(self, x):
         x = self.CNN_layers(x)
-        # x = x.view(x.size(0), -1)  # flatten
         x = self.FC_layers(x)
         x = F.softmax(x, dim=1)
         return x
@@ -262,13 +315,7 @@ class LitCNN(LightningModule):
         y_hat = self(x.to(self.device))
         loss = F.cross_entropy(y_hat, y)
         self.log("test_loss", loss, on_step=False, on_epoch=True)
-        self.log("test_acc", self.accuracy(y_hat.argmax(dim=1), y.argmax(dim=1)), on_step=False, on_epoch=True)
-        return loss
 
-    def predict_step(self, batch, batch_idx):
-        x, y = batch
-        pred = self(x.to(self.device))  # send input to GPU
-        return pred
 
 
 # src: https://pytorch-lightning.readthedocs.io/en/latest/starter/introduction.html
@@ -327,30 +374,3 @@ class ResNetCNN(LightningModule):
         return pred
 
 
-# **********************************************************************************************************************
-# Utils
-# **********************************************************************************************************************
-
-# Get the latest checkpoint
-
-import re
-
-def find_latest_checkpoint(dir_path, model_name) -> str:
-    """
-        This function finds the latest checkpoint file for a given model name in a specified directory path.
-
-        Args:
-        dir_path (str): The directory path where the checkpoint files are stored.
-        model_name (str): The name of the model to find the latest checkpoint for.
-
-        Returns:
-        str: The filename (including extension) of the latest checkpoint file found. If no matching checkpoint file
-          is found, returns an empty string.
-    """
-    checkpoints = [f for f in os.listdir(dir_path) if f.endswith('.ckpt')]
-    checkpoints_v = [f for f in checkpoints if re.match(r'^{}-v\d+.ckpt$'.format(model_name), f)]
-    if checkpoints_v:
-        latest_checkpoint = max(checkpoints_v, key=lambda f: int(re.search(r'\d+', f).group()))
-    else:
-        latest_checkpoint = max(checkpoints)
-    return latest_checkpoint

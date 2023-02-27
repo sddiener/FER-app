@@ -5,8 +5,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
-from tqdm import tqdm
-from src.lib import parse_training_args, FERPlusDataModule, LitCNN
+from src import lib
 
 
 def train_model(train_data_dir, val_data_dir, test_data_dir, ckpt_dir, model_name, batch_size=32, epochs=10,
@@ -27,12 +26,12 @@ def train_model(train_data_dir, val_data_dir, test_data_dir, ckpt_dir, model_nam
 
     # Instantiate the FERPlusDataModule
     logger.info(f"Creating FERPlusDataModule ...")
-    data_module = FERPlusDataModule(train_data_dir, val_data_dir, test_data_dir,
+    data_module = lib.FERPlusDataModule(train_data_dir, val_data_dir, test_data_dir,
                                     batch_size, num_dl_workers, debug)
 
     # Instantiate the model
     logger.info(f"Creating LitCNN ...")
-    model = LitCNN(input_shape=(batch_size, 1, 48, 48),  num_classes=9, lr=0.00001)
+    model = lib.LitCNN(input_shape=(batch_size, 1, 48, 48),  num_classes=9, lr=0.00001)
     device = torch.device(device)
     model = model.to(device)
     logger.info(f"GPU usage: {torch.cuda.memory_allocated(device) / 1e9} GB")
@@ -66,21 +65,6 @@ def train_model(train_data_dir, val_data_dir, test_data_dir, ckpt_dir, model_nam
 
 
 if __name__ == "__main__":
-    # declare manual args list to pass to parse_args()
-    FER_DATA_DIR = "C:/Users/stefan/Github/FER-app/data/ferplus/data"
-    # define default values for the arguments
-    default_args = {
-        'train_data_dir': f"{FER_DATA_DIR}/FER2013Train",
-        'val_data_dir': f"{FER_DATA_DIR}/FER2013Valid",
-        'test_data_dir': f"{FER_DATA_DIR}/FER2013Test",
-        'ckpt_dir': "C:/Users/stefan/Github/FER-app/results/checkpoints",
-        'model_name': "ferplus_litcnn",
-        'batch_size': 256,
-        'epochs': 3,
-        'num_dl_workers': 0,
-        'device': 'cuda',
-        'debug': True
-    }
-    args = parse_training_args(default_args)
+    args = lib.parse_training_args(lib.DEFAULT_TRAINING_ARGS)
     train_model(args.train_data_dir, args.val_data_dir, args.test_data_dir, args.ckpt_dir, args.model_name,
                 args.batch_size, args.epochs, args.num_dl_workers, args.device, args.debug)

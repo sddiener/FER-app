@@ -44,14 +44,14 @@ def parse_args_with_error_handling(parser, args_dict):
         exit(1)
 
 
-def parse_training_args(args_dict=None):
+def parse_training_args(args_dict=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
     # add arguments for each parameter
     parser.add_argument('--train_data_dir', type=str, help='path to train data directory')
     parser.add_argument('--val_data_dir', type=str, help='path to val data directory')
     parser.add_argument('--test_data_dir', type=str, help='path to test data directory')
-    parser.add_argument('--model_save_path', type=str, help='path to save the model')
+    parser.add_argument('--ckpt_dir', type=str, help='path to checkpoint directory')
     parser.add_argument('--batch_size', type=int, default=256, help='batch size')
     parser.add_argument('--epochs', type=int, default=100, help='number of epochs to train for')
     parser.add_argument('--num_dl_workers', type=int, default=0, help='number of workers for dataloader')
@@ -62,13 +62,15 @@ def parse_training_args(args_dict=None):
     return parse_args_with_error_handling(parser, args_dict)
 
 
-def parse_prediction_args(args_dict):
+def parse_prediction_args(args_dict) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--image_path", type=str, help="path to the image to predict")
-    parser.add_argument("--model_path", type=str, help="path to the pretrained model")
+    parser.add_argument("--checkpoint_path", type=str, help="path to the checkpoint to use for prediction")
     parser.add_argument("--device", type=str, default="cuda", help="device to use for prediction")
 
     return parse_args_with_error_handling(parser, args_dict)
+
+
 # **********************************************************************************************************************
 # FERPlus - Data Loading
 # **********************************************************************************************************************
@@ -112,6 +114,7 @@ def load_ferplus_dataset(data_folder, debug=False):
     labels = np.array(labels, dtype=np.float32) / 10.0  # normalize probabilities
     logger.info(f"Loaded {len(images)} images from {data_folder}, shape: {images.shape}")
     return images, labels
+
 
 # **********************************************************************************************************************
 # PyTorch Lightning - Dataset & DataModule
@@ -171,13 +174,16 @@ class FERPlusDataModule(LightningDataModule):
             self.test_dataset = FERPlusDataset(test_images, test_labels)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True, num_workers=self.num_dl_workers)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True, 
+                          num_workers=self.num_dl_workers)
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True, num_workers=self.num_dl_workers)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True, 
+                          num_workers=self.num_dl_workers)
 
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True, num_workers=self.num_dl_workers)
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True,
+                          num_workers=self.num_dl_workers)
 
 # **********************************************************************************************************************
 # PyTorch Lightning - Models
@@ -195,6 +201,7 @@ class LitCNN(LightningModule):
         self.accuracy = torchmetrics.Accuracy(task="multiclass", num_classes=num_classes)
         self.example_input_array = torch.randn(input_shape)  # for logging (must be batch shape)
         self.lr = lr
+        self.save_hyperparameters()  # save hyperparameters for checkpointing
 
         # CNN block - image size 100*100
         self.CNN_layers = nn.Sequential(
@@ -318,3 +325,32 @@ class ResNetCNN(LightningModule):
         x, y = batch
         pred = self(x)
         return pred
+
+
+# **********************************************************************************************************************
+# Utils
+# **********************************************************************************************************************
+
+# Get the latest checkpoint
+
+import re
+
+def find_latest_checkpoint(dir_path, model_name) -> str:
+    """
+        This function finds the latest checkpoint file for a given model name in a specified directory path.
+
+        Args:
+        dir_path (str): The directory path where the checkpoint files are stored.
+        model_name (str): The name of the model to find the latest checkpoint for.
+
+        Returns:
+        str: The filename (including extension) of the latest checkpoint file found. If no matching checkpoint file
+          is found, returns an empty string.
+    """
+    checkpoints = [f for f in os.listdir(dir_path) if f.endswith('.ckpt')]
+    checkpoints_v = [f for f in checkpoints if re.match(r'^{}-v\d+.ckpt$'.format(model_name), f)]
+    if checkpoints_v:
+        latest_checkpoint = max(checkpoints_v, key=lambda f: int(re.search(r'\d+', f).group()))
+    else:
+        latest_checkpoint = max(checkpoints)
+    return latest_checkpoint

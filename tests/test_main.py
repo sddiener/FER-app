@@ -1,25 +1,35 @@
 import pytest
 import os
+from src import lib
 from src.lib import FERPlusDataModule
 from src.training_module import train_model
 from src.prediction_module import predict_emotion
-from src.lib import parse_training_args
+from src.lib import parse_training_args, parse_prediction_args, find_latest_checkpoint
 
 # **********************************************************************************************************************
 # Global Arguments
 # **********************************************************************************************************************
+ROOT_DIR = "C:/Users/stefan/Github/FER-app"
 FER_DATA_DIR = "C:/Users/stefan/Github/FER-app/data/ferplus/data"
+CHECKPOINT_NAME = find_latest_checkpoint(dir_path=os.path.join(ROOT_DIR, "results/checkpoints"), model_name="ferplus_litcnn")
+
 DEFAULT_TRAINING_ARGS = {
     "train_data_dir": f"{FER_DATA_DIR}/FER2013Train",
     "val_data_dir": f"{FER_DATA_DIR}/FER2013Valid",
     "test_data_dir": f"{FER_DATA_DIR}/FER2013Test",
-    "model_save_path": "C:/Users/stefan/Github/FER-app/results/models//ferplus_cnn_e2e.pt",
+    'ckpt_dir': f"{ROOT_DIR}/results/checkpoints",
+    'model_name': "ferplus_litcnn",
     "debug": True,
     "batch_size": 64,
     "num_dl_workers": 0,
     "epochs": 1
 }
-
+ 
+DEFAULT_PREDICTION_ARGS = {
+    'image_path': f"{ROOT_DIR}/data/ferplus/data/FER2013Test/fer0032222.png",
+    'checkpoint_path': f"{ROOT_DIR}/results/checkpoints/{CHECKPOINT_NAME}",
+    "device": "cuda",
+}
 
 # **********************************************************************************************************************
 # Test Data & DataModule
@@ -60,27 +70,18 @@ def test_data_module_creation():
 
 def test_training_module():
     # Run training_main.py
-    train_model(**DEFAULT_TRAINING_ARGS)
+    train_model(**DEFAULT_TRAINING_ARGS)  # TODO Give testing name to the model
 
-    # Check that the model was saved
-    assert os.path.exists(DEFAULT_TRAINING_ARGS["model_save_path"])
-
-    # Check that the model is not empty
-    assert os.path.getsize(DEFAULT_TRAINING_ARGS["model_save_path"]) > 0
+    assert os.path.exists(DEFAULT_PREDICTION_ARGS["checkpoint_path"])  # Check that the checkpoint file exists
+    assert os.path.getsize(DEFAULT_PREDICTION_ARGS["checkpoint_path"]) > 0  # Check that the file is not empty
 
 
 def test_predict_emotion():
-    FER_DATA_DIR = "C:/Users/stefan/Github/FER-app/data/ferplus/data",
-    MODEL_DIR = "C:/Users/stefan/Github/FER-app/results/models/",
-    image_path =  f"{FER_DATA_DIR}/FER2013Test/fer0032222.png",
-    model_path =  f"{MODEL_DIR}/ferplus_cnn_e2e_v0.pt",
-    device = "cuda"
-
+    # define default values for the arguments
+    prediction = predict_emotion(**DEFAULT_PREDICTION_ARGS)
+    prediction = prediction.argmax()
     # Expected prediction for the test image
-    expected_prediction = 2
-
-    # Call the predict_emotion function
-    prediction = predict_emotion(image_path, model_path, device)
+    expected_prediction = 8
 
     # Assert that the predicted emotion is the expected one
     assert prediction == expected_prediction, f"Prediction {prediction} does not match expected value {expected_prediction}"

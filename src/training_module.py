@@ -5,28 +5,40 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
-
+from tqdm import tqdm
 from src.lib import parse_training_args, FERPlusDataModule, LitCNN
 
 
-def train_model(train_data_dir, val_data_dir, test_data_dir, model_save_path, batch_size=32, epochs=10,
+def train_model(train_data_dir, val_data_dir, test_data_dir, ckpt_dir, model_name, batch_size=32, epochs=10,
                 num_dl_workers=4, device='cuda', debug=False):
 
-    logger.info(f"Training with arguments: train_data_dir={train_data_dir}, val_data_dir={val_data_dir}, "
-                f"test_data_dir={test_data_dir}, model_save_path={model_save_path}, batch_size={batch_size}, "
-                f"epochs={epochs}, num_dl_workers={num_dl_workers}, device={device}, debug={debug}")
+    logger.info(f"Training with arguments:\n"
+                f"  train_data_dir = {train_data_dir}\n"
+                f"  val_data_dir   = {val_data_dir}\n"
+                f"  test_data_dir  = {test_data_dir}\n"
+                f"  ckpt_dir       = {ckpt_dir}\n"
+                f"  batch_size     = {batch_size}\n"
+                f"  epochs         = {epochs}\n"
+                f"  num_dl_workers = {num_dl_workers}\n"
+                f"  device         = {device}\n"
+                f"  debug          = {debug}")
 
     logger.info(f"Available GPUs: {torch.cuda.device_count()}")
 
     # Instantiate the FERPlusDataModule
-    data_module = FERPlusDataModule(train_data_dir, val_data_dir, test_data_dir, batch_size, num_dl_workers, debug)
+    logger.info(f"Creating FERPlusDataModule ...")
+    data_module = FERPlusDataModule(train_data_dir, val_data_dir, test_data_dir,
+                                    batch_size, num_dl_workers, debug)
 
     # Instantiate the model
+    logger.info(f"Creating LitCNN ...")
     model = LitCNN(input_shape=(batch_size, 1, 48, 48),  num_classes=9, lr=0.00001)
     device = torch.device(device)
     model = model.to(device)
+    logger.info(f"GPU usage: {torch.cuda.memory_allocated(device) / 1e9} GB")
 
     # Instantiate the trainer
+    logger.info(f"Creating Trainer ...")
     trainer = pl.Trainer(
         accelerator='gpu',
         max_epochs=epochs,
@@ -35,8 +47,8 @@ def train_model(train_data_dir, val_data_dir, test_data_dir, model_save_path, ba
         callbacks=[
             EarlyStopping(monitor="val_loss", patience=20),
             ModelCheckpoint(
-                dirpath="results/checkpoints/",
-                filename="best-checkpoint",
+                dirpath=f"{ckpt_dir}",
+                filename=f"{model_name}",
                 save_top_k=1,
                 monitor="val_loss",
                 mode="min"
@@ -46,33 +58,29 @@ def train_model(train_data_dir, val_data_dir, test_data_dir, model_save_path, ba
 
     # Train the model
     trainer.fit(model, data_module)
-
+    # Checkpoint save path
+    logger.info(f"Saving model to {ckpt_dir} ...")
     # Test the model
     test_result = trainer.test(model, datamodule=data_module)
-
-    # Log test result
     logger.info(f"Test results: {test_result[0]}")
-
-    # Save the trained model
-    torch.save(model.state_dict(), model_save_path)
 
 
 if __name__ == "__main__":
     # declare manual args list to pass to parse_args()
     FER_DATA_DIR = "C:/Users/stefan/Github/FER-app/data/ferplus/data"
-
     # define default values for the arguments
     default_args = {
         'train_data_dir': f"{FER_DATA_DIR}/FER2013Train",
         'val_data_dir': f"{FER_DATA_DIR}/FER2013Valid",
         'test_data_dir': f"{FER_DATA_DIR}/FER2013Test",
-        'model_save_path': 'C:/Users/stefan/Github/FER-app/results/models/ferplus_cnn_e2e_v1.pt',
+        'ckpt_dir': "C:/Users/stefan/Github/FER-app/results/checkpoints",
+        'model_name': "ferplus_litcnn",
         'batch_size': 256,
         'epochs': 3,
         'num_dl_workers': 0,
         'device': 'cuda',
-        'debug': False
+        'debug': True
     }
     args = parse_training_args(default_args)
-    train_model(args.train_data_dir, args.val_data_dir, args.test_data_dir, args.model_save_path,
+    train_model(args.train_data_dir, args.val_data_dir, args.test_data_dir, args.ckpt_dir, args.model_name,
                 args.batch_size, args.epochs, args.num_dl_workers, args.device, args.debug)

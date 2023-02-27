@@ -31,28 +31,49 @@ def str_to_bool(s: str) -> bool:
         raise ValueError("Cannot convert string to bool")
 
 
-def parse_training_args(custom_args=None):
+def parse_args_with_error_handling(parser, args_dict):
+    try:
+        if args_dict is None:
+            return parser.parse_args()
+        else:
+            return parser.parse_args(namespace=argparse.Namespace(**args_dict))
+
+    except argparse.ArgumentError as e:
+        print(f"Error: {e}")
+        parser.print_usage()
+        exit(1)
+
+
+def parse_training_args(args_dict=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train_data_dir", required=True, type=str, help="path to train data directory")
-    parser.add_argument("--val_data_dir", required=True, type=str, help="path to train data directory")
-    parser.add_argument("--test_data_dir", required=True, type=str, help="path to train data directory")
-    parser.add_argument("--model_save_path", required=True, type=str, help="path to train data directory")
-    parser.add_argument("--batch_size", type=int, default=32, help="batch size")
-    parser.add_argument("--epochs", type=int, default=3, help="number of epochs to train for")
-    parser.add_argument("--num_dl_workers", type=int, default=2, help="number of workers for dataloader")
-    parser.add_argument("--device", type=str, default="cuda", help="device to train on")
-    parser.add_argument("--debug", type=str_to_bool, default="False", help="debug mode. Use only 100 samples are used")
 
-    # check if sys args or custom args are passed
-    if custom_args:
-        return parser.parse_args(custom_args)
-    else:
-        return parser.parse_args()
+    # add arguments for each parameter
+    parser.add_argument('--train_data_dir', type=str, help='path to train data directory')
+    parser.add_argument('--val_data_dir', type=str, help='path to val data directory')
+    parser.add_argument('--test_data_dir', type=str, help='path to test data directory')
+    parser.add_argument('--model_save_path', type=str, help='path to save the model')
+    parser.add_argument('--batch_size', type=int, default=256, help='batch size')
+    parser.add_argument('--epochs', type=int, default=100, help='number of epochs to train for')
+    parser.add_argument('--num_dl_workers', type=int, default=0, help='number of workers for dataloader')
+    parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available()
+                        else 'cpu', help='device to train on')
+    parser.add_argument('--debug', type=bool, default=False, help='debug mode')
+
+    return parse_args_with_error_handling(parser, args_dict)
 
 
+def parse_prediction_args(args_dict):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--image_path", type=str, help="path to the image to predict")
+    parser.add_argument("--model_path", type=str, help="path to the pretrained model")
+    parser.add_argument("--device", type=str, default="cuda", help="device to use for prediction")
+
+    return parse_args_with_error_handling(parser, args_dict)
 # **********************************************************************************************************************
 # FERPlus - Data Loading
 # **********************************************************************************************************************
+
+
 def load_image(image_path: str) -> np.ndarray:
     with Image.open(image_path) as img:
         img = np.array(img)
@@ -104,6 +125,8 @@ class FERPlusDataset(Dataset):
         self.transform = transforms.Compose(
             [
                 transforms.ToTensor(),
+                # to grayscale
+                transforms.Grayscale(num_output_channels=1),
                 transforms.Resize(48),  # resize to 224x224
                 # stack grayscale image along channels dimension
                 # transforms.Lambda(lambda x: torch.stack([x[0], x[0], x[0]], dim=0)),

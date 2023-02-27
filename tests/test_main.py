@@ -6,6 +6,8 @@ from src.training_module import train_model
 from src.prediction_module import predict_emotion
 from src.lib import parse_training_args, parse_prediction_args, find_latest_checkpoint
 
+# TODO Automate running test before commit
+
 
 # **********************************************************************************************************************
 # Test Data & DataModule

@@ -60,7 +60,7 @@ TIP: If you want to use autopep8 instead of black, you can do that by changing t
 ```json
 "editor.formatOnSave": true,
 "python.formatting.provider": "autopep8",
-"python.formatting.autopep8Args": "[-i", "-a", "-a", "--max-line-length", "120"],
+"python.formatting.autopep8Args": '["--aggressive", "--aggressive", "--max-line-length", "120"]',
 ```
 and then run this command in the terminal:
 ```console      

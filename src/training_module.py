@@ -41,7 +41,7 @@ def train_model(train_data_dir, val_data_dir, test_data_dir, ckpt_dir, model_nam
     trainer = pl.Trainer(
         accelerator='gpu',
         max_epochs=epochs,
-        logger=TensorBoardLogger("logs/", name="ferplus"),
+        logger=TensorBoardLogger("results/logs/", name="TensorBoard"),
         log_every_n_steps=5,
         callbacks=[
             EarlyStopping(monitor="val_loss", patience=20),
@@ -65,6 +65,18 @@ def train_model(train_data_dir, val_data_dir, test_data_dir, ckpt_dir, model_nam
 
 
 if __name__ == "__main__":
-    args = lib.parse_training_args(lib.DEFAULT_TRAINING_ARGS)
+    CUSTOM_TRAINING_ARGS = {
+        "train_data_dir": lib.DEFAULT_TRAINING_ARGS["train_data_dir"],
+        "val_data_dir": lib.DEFAULT_TRAINING_ARGS["val_data_dir"],
+        "test_data_dir": lib.DEFAULT_TRAINING_ARGS["test_data_dir"],
+        'ckpt_dir': lib.DEFAULT_TRAINING_ARGS['ckpt_dir'],
+        'model_name': "ferplus_litcnn",
+        "debug": False,
+        "batch_size": 256,
+        "num_dl_workers": 0,
+        "epochs": 200
+    }
+
+    args = lib.parse_training_args(CUSTOM_TRAINING_ARGS)
     train_model(args.train_data_dir, args.val_data_dir, args.test_data_dir, args.ckpt_dir, args.model_name,
                 args.batch_size, args.epochs, args.num_dl_workers, args.device, args.debug)

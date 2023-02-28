@@ -54,10 +54,10 @@ def find_latest_checkpoint(dir_path, model_name) -> str:
 ROOT_DIR = "C:/Users/stefan/Github/FER-app"
 FER_DATA_DIR = "C:/Users/stefan/Github/FER-app/data/ferplus/data"
 CHECKPOINT_NAME = find_latest_checkpoint(
-    dir_path=os.path.join(
-        ROOT_DIR,
-        "results/checkpoints"),
-    model_name="ferplus_litcnn")
+    dir_path=os.path.join(ROOT_DIR, "results/checkpoints"),
+    model_name="ferplus_litcnn"
+)
+LATEST_CHECKPOINT_PATH = os.path.join(ROOT_DIR, "results/checkpoints", CHECKPOINT_NAME)
 
 DEFAULT_TRAINING_ARGS = {
     "train_data_dir": f"{FER_DATA_DIR}/FER2013Train",
@@ -76,6 +76,30 @@ DEFAULT_PREDICTION_ARGS = {
     'checkpoint_path': f"{ROOT_DIR}/results/checkpoints/{CHECKPOINT_NAME}",
     "device": "cuda",
 }
+
+LABEL_DICT = {
+    0: "neutral",
+    1: "happiness",
+    2: "surprise",
+    3: "sadness",
+    4: "anger",
+    5: "disgust",
+    6: "anger",
+    7: "disgust",
+    8: "fear",
+    9: "contempt"
+}
+
+
+def get_top_n_emotions(predictions, n=None, label_dict=LABEL_DICT):
+    # Create a list of tuples containing each emotion label and its probability
+    emotions = [(label_dict[i], p) for i, p in enumerate(predictions)]
+    # Sort the list of emotions by probability in descending order
+    sorted_emotions = sorted(emotions, key=lambda x: x[1], reverse=True)
+    # Return the top n emotions and their probabilities as a new dictionary
+    return dict(sorted_emotions[:n])
+
+
 # **********************************************************************************************************************
 # Argument Parsing
 # **********************************************************************************************************************
@@ -379,3 +403,31 @@ class ResNetCNN(LightningModule):
         x, y = batch
         pred = self(x)
         return pred
+
+# **********************************************************************************************************************
+# Streamlit
+# **********************************************************************************************************************
+
+
+def load_model(checkpoint_path: str, device: str) -> lib.LitCNN:
+    model = lib.LitCNN.load_from_checkpoint(checkpoint_path)
+    model.eval()
+    model = model.to(device)
+    return model
+
+
+def predict_emotion(model, image):
+    transform = transforms.Compose([
+        transforms.Grayscale(),
+        transforms.Resize((48, 48)),
+        transforms.ToTensor(),
+        # transforms.Normalize((0.5,), (0.5,))
+    ])
+
+    image = Image.open(image).convert('L')
+    image = transform(image).unsqueeze(0)
+
+    with torch.no_grad():
+        output = model(image)
+
+    return output.cpu().numpy()

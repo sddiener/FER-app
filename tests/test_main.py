@@ -3,7 +3,7 @@ import os
 from src import lib
 from src.lib import FERPlusDataModule
 from src.training_module import train_model
-from src.prediction_module import predict_emotion
+from src.prediction_module import main
 from src.lib import parse_training_args, parse_prediction_args, find_latest_checkpoint
 
 # TODO Automate running test before commit
@@ -26,9 +26,13 @@ def test_data_exists():
 
 def test_data_module_creation():
     # Create FERPlusDataModule
-    data_module = FERPlusDataModule(lib.DEFAULT_TRAINING_ARGS["train_data_dir"], lib.DEFAULT_TRAINING_ARGS["val_data_dir"],
-                                    lib.DEFAULT_TRAINING_ARGS["test_data_dir"], lib.DEFAULT_TRAINING_ARGS["batch_size"],
-                                    lib.DEFAULT_TRAINING_ARGS["num_dl_workers"], lib.DEFAULT_TRAINING_ARGS["debug"])
+    data_module = FERPlusDataModule(
+        lib.DEFAULT_TRAINING_ARGS["train_data_dir"],
+        lib.DEFAULT_TRAINING_ARGS["val_data_dir"],
+        lib.DEFAULT_TRAINING_ARGS["test_data_dir"],
+        lib.DEFAULT_TRAINING_ARGS["batch_size"],
+        lib.DEFAULT_TRAINING_ARGS["num_dl_workers"],
+        lib.DEFAULT_TRAINING_ARGS["debug"])
 
     # test for debugging
     data_module.setup()
@@ -55,7 +59,7 @@ def test_training_module():
 
 
 def test_predict_emotion():
-    prediction = predict_emotion(**lib.DEFAULT_PREDICTION_ARGS)
+    prediction = main(**lib.DEFAULT_PREDICTION_ARGS)
 
     # Assert that the prediction is not empty
     assert prediction.shape == (1, 9)

@@ -4,3 +4,4 @@ logs/*
 results/checkpoints/*
 results/logs/Tensorboard/*
 results/models/*
+src/__pycache__/*

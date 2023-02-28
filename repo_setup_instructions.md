@@ -49,7 +49,7 @@ Type `cmd + shift + p` and type `Open Folder Settings (JSON)`
 "python.formatting.provider": "black",
 "python.formatting.blackArgs": ["--line-length", "120"],
 ```
-For testing later also add: 
+For testing later also add:
 ```json
 "python.testing.pytestEnabled": true,
 "python.testing.pytestArgs": [
@@ -63,7 +63,7 @@ TIP: If you want to use autopep8 instead of black, you can do that by changing t
 "python.formatting.autopep8Args": '["--aggressive", "--aggressive", "--max-line-length", "120"]',
 ```
 and then run this command in the terminal:
-```console      
+```console
 $ autopep8 -i -a -a --max-line-length 120 -r src/
 ```
 

@@ -1,5 +1,6 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+-   repo: https://github.com/pre-commit/pre-commit-hooks  # large files
+    rev:  v4.4.0
     hooks:
-    -   id: check-large-files
+    -   id: check-added-large-files
         args: ['--maxkb=1024']

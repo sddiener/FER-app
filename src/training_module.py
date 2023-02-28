@@ -27,11 +27,11 @@ def train_model(train_data_dir, val_data_dir, test_data_dir, ckpt_dir, model_nam
     # Instantiate the FERPlusDataModule
     logger.info(f"Creating FERPlusDataModule ...")
     data_module = lib.FERPlusDataModule(train_data_dir, val_data_dir, test_data_dir,
-                                    batch_size, num_dl_workers, debug)
+                                        batch_size, num_dl_workers, debug)
 
     # Instantiate the model
     logger.info(f"Creating LitCNN ...")
-    model = lib.LitCNN(input_shape=(batch_size, 1, 48, 48),  num_classes=9, lr=0.00001)
+    model = lib.LitCNN(input_shape=(batch_size, 1, 48, 48), num_classes=9, lr=0.00001)
     device = torch.device(device)
     model = model.to(device)
     logger.info(f"GPU usage: {torch.cuda.memory_allocated(device) / 1e9} GB")

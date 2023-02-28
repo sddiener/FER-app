@@ -56,6 +56,16 @@ For testing later also add:
    "--verbose"
 ]
 ```
+TIP: If you want to use autopep8 instead of black, you can do that by changing the settings.json to this:
+```json
+"editor.formatOnSave": true,
+"python.formatting.provider": "autopep8",
+"python.formatting.autopep8Args": "[-i", "-a", "-a", "--max-line-length", "120"],
+```
+and then run this command in the terminal:
+```console      
+$ autopep8 -i -a -a --max-line-length 120 -r src/
+```
 
 ### 4) Add testing
 configure testing in VSCode

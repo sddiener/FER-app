@@ -25,6 +25,7 @@ import src.lib as lib
 
 import re
 
+
 def find_latest_checkpoint(dir_path, model_name) -> str:
     """
         This function finds the latest checkpoint file for a given model name in a specified directory path.
@@ -49,9 +50,14 @@ def find_latest_checkpoint(dir_path, model_name) -> str:
 # CONFIG VARIABLES
 # **********************************************************************************************************************
 
+
 ROOT_DIR = "C:/Users/stefan/Github/FER-app"
 FER_DATA_DIR = "C:/Users/stefan/Github/FER-app/data/ferplus/data"
-CHECKPOINT_NAME = find_latest_checkpoint(dir_path=os.path.join(ROOT_DIR, "results/checkpoints"), model_name="ferplus_litcnn")
+CHECKPOINT_NAME = find_latest_checkpoint(
+    dir_path=os.path.join(
+        ROOT_DIR,
+        "results/checkpoints"),
+    model_name="ferplus_litcnn")
 
 DEFAULT_TRAINING_ARGS = {
     "train_data_dir": f"{FER_DATA_DIR}/FER2013Train",
@@ -64,7 +70,7 @@ DEFAULT_TRAINING_ARGS = {
     "num_dl_workers": 0,
     "epochs": 1
 }
- 
+
 DEFAULT_PREDICTION_ARGS = {
     'image_path': f"{ROOT_DIR}/data/ferplus/data/FER2013Test/fer0032222.png",
     'checkpoint_path': f"{ROOT_DIR}/results/checkpoints/{CHECKPOINT_NAME}",
@@ -227,11 +233,11 @@ class FERPlusDataModule(LightningDataModule):
             self.test_dataset = FERPlusDataset(test_images, test_labels)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True, 
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True,
                           num_workers=self.num_dl_workers)
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True, 
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True,
                           num_workers=self.num_dl_workers)
 
     def test_dataloader(self):
@@ -243,6 +249,7 @@ class FERPlusDataModule(LightningDataModule):
 # **********************************************************************************************************************
 
 # src: https://pytorch-lightning.readthedocs.io/en/latest/starter/introduction.html
+
 
 class LitCNN(LightningModule):
     def __init__(self, input_shape, num_classes, lr, batch_size=32):
@@ -317,7 +324,6 @@ class LitCNN(LightningModule):
         self.log("test_loss", loss, on_step=False, on_epoch=True)
 
 
-
 # src: https://pytorch-lightning.readthedocs.io/en/latest/starter/introduction.html
 class ResNetCNN(LightningModule):
     def __init__(self, num_classes, lr):
@@ -332,7 +338,8 @@ class ResNetCNN(LightningModule):
         self.lr = lr
 
         # ResNet Backbone
-        # src: https://pytorch-lightning.readthedocs.io/en/latest/advanced/transfer_learning.html#example-imagenet-computer-vision
+        # src:
+        # https://pytorch-lightning.readthedocs.io/en/latest/advanced/transfer_learning.html#example-imagenet-computer-vision
         backbone_tmp = models.resnet50(pretrained=True)
         num_filters = (backbone_tmp.fc.in_features)  # get feature number before removing layer
         layers = list(backbone_tmp.children())[:-1]
@@ -372,5 +379,3 @@ class ResNetCNN(LightningModule):
         x, y = batch
         pred = self(x)
         return pred
-
-

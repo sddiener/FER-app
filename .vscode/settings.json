@@ -1,0 +1,16 @@
+{
+    // Testing
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "pytest.command": "/Users/datoux/.virtualenvs/demo-mLN-1lcH/bin/pytest",
+    // Formatting
+    "editor.defaultFormatter": "ms-python.autopep8",
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "autopep8", // "black",
+    "python.formatting.autopep8Args": ["--max-line-length", "120", "-i", "-a", "-a"],
+    // "python.formatting.provider": "black",
+    // "python.formatting.blackArgs": ["--line-length", "120"],
+}

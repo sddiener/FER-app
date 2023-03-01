@@ -74,7 +74,7 @@ DEFAULT_TRAINING_ARGS = {
 DEFAULT_PREDICTION_ARGS = {
     'image_path': f"{ROOT_DIR}/data/ferplus/data/FER2013Test/fer0032222.png",
     'checkpoint_path': f"{ROOT_DIR}/results/checkpoints/{CHECKPOINT_NAME}",
-    "device": "cuda",
+    "device": "cuda" if torch.cuda.is_available() else "cpu",
 }
 
 LABEL_DICT = {
@@ -416,22 +416,28 @@ def load_model(checkpoint_path: str, device: str) -> lib.LitCNN:
     return model
 
 
-def predict_emotion(model, image):
+def img_to_tensor(img: Image.Image) -> torch.Tensor:
     transform = transforms.Compose([
+        transforms.ToTensor(),
         transforms.Grayscale(),
         transforms.Resize((48, 48)),
-        transforms.ToTensor(),
-        # transforms.Normalize((0.5,), (0.5,))
+        # transforms.Normalize((0.5,), (0.5,))  # TODO: Check if this is needed
     ])
+    img = transform(img).unsqueeze(0)
+    return img
 
-    image = Image.open(image).convert('L')
-    image = transform(image).unsqueeze(0)
 
-    with torch.no_grad():
-        output = model(image)
+def predict_emotion(model, image: torch.tensor, device=None):
+    if device is None:
+        device = model.device
+
+    image = image.to(device)
+    model = model.to(device)
+    output = model(image)
 
     # TODO: Refactor to show top 3 emotions with probability. Or use a bar chart.
     # convert output probabilities to predicted class
-    emotion = output.cpu().numpy().argmax()
-    emotion = lib.LABEL_DICT[emotion]
+    output = output.cpu().detach()  # send to CPU
+    class_idx = output.numpy().argmax()
+    emotion = lib.LABEL_DICT[class_idx]
     return emotion

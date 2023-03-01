@@ -8,8 +8,8 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from src import lib
 
 
-def train_model(train_data_dir, val_data_dir, test_data_dir, ckpt_dir, model_name, batch_size=32, epochs=10,
-                num_dl_workers=4, device='cuda', debug=False):
+def main(train_data_dir, val_data_dir, test_data_dir, ckpt_dir, model_name, batch_size=32, epochs=10,
+         num_dl_workers=4, device='cuda', debug=False):
 
     logger.info(f"Training with arguments:\n"
                 f"  train_data_dir = {train_data_dir}\n"
@@ -78,5 +78,5 @@ if __name__ == "__main__":
     }
 
     args = lib.parse_training_args(CUSTOM_TRAINING_ARGS)
-    train_model(args.train_data_dir, args.val_data_dir, args.test_data_dir, args.ckpt_dir, args.model_name,
-                args.batch_size, args.epochs, args.num_dl_workers, args.device, args.debug)
+    main(args.train_data_dir, args.val_data_dir, args.test_data_dir, args.ckpt_dir, args.model_name,
+         args.batch_size, args.epochs, args.num_dl_workers, args.device, args.debug)

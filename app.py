@@ -13,24 +13,7 @@ def main():
         st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
 
         prediction = lib.predict_emotion(model, uploaded_file)
-        st.write(prediction)
-
-        # TODO - Display the top 3 emotions in nicer format.
-        # st.write(prediction)
-        # st.write(type(prediction))
-        # for i, p in enumerate(prediction):
-        #     st.write(f"{lib.LABEL_DICT[i]}: {p}")
-        # # prediction = lib.get_top_n_emotions(prediction, n=3)
-        # # Create a list of tuples containing each emotion label and its probability
-        # emotions = [(lib.LABEL_DICT[i], p) for i, p in enumerate(prediction)]
-        # # Sort the list of emotions by probability in descending order
-        # st.write("emotions")
-        # st.write(type(emotions))
-        # st.write(len(emotions))
-        # st.write(emotions)
-        # sorted_emotions = sorted(emotions, key=lambda x: x[1], reverse=True)
-        # st.write("sorted_emotions")
-        # st.write(sorted_emotions)
+        st.write(f"Predicted emotion: {prediction}")
 
 
 if __name__ == '__main__':

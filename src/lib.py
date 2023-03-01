@@ -430,4 +430,8 @@ def predict_emotion(model, image):
     with torch.no_grad():
         output = model(image)
 
-    return output.cpu().numpy()
+    # TODO: Refactor to show top 3 emotions with probability. Or use a bar chart.
+    # convert output probabilities to predicted class
+    emotion = output.cpu().numpy().argmax()
+    emotion = lib.LABEL_DICT[emotion]
+    return emotion

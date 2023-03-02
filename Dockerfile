@@ -11,7 +11,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code into the container
-COPY . .
+COPY results/checkpoints/best_model_litcnn.ckpt ./model/
+COPY data/ferplus/data/FER2013Test/ ./data/test_images
+COPY src ./src/
 
 # Expose the port that Streamlit will use
 EXPOSE 8501

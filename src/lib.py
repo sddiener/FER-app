@@ -44,7 +44,7 @@ def find_latest_checkpoint(dir_path, model_name) -> str:
 
 ROOT_DIR = "C:/Users/stefan/Github/FER-app"
 FER_DATA_DIR = "C:/Users/stefan/Github/FER-app/data/ferplus/data"
-BEST_CHECKPOINT_NAME = "ferplus_litcnn-v18.ckpt"
+BEST_CHECKPOINT_NAME = "best_model_litcnn.ckpt"
 BEST_CHECKPOINT_PATH = os.path.join(ROOT_DIR, "results/checkpoints", BEST_CHECKPOINT_NAME)
 # LATEST_CHECKPOINT_NAME = find_latest_checkpoint(
 #     dir_path=os.path.join(ROOT_DIR, "results/checkpoints"),

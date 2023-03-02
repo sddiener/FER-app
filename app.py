@@ -8,7 +8,6 @@ def main():
     st.title("Facial Emotion Recognition")
 
     uploaded_file = st.file_uploader("Upload an image of a face", type=["jpg", "jpeg", "png"])
-    # convert to numpy array
 
     if uploaded_file is not None:
         st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)

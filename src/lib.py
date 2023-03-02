@@ -14,7 +14,9 @@ import torchvision.transforms as transforms
 import torchmetrics
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning import LightningModule
-
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Dict, List, Tuple, Optional, Union
 import src.lib as lib
 
 # **********************************************************************************************************************
@@ -27,17 +29,6 @@ import re
 
 
 def find_latest_checkpoint(dir_path, model_name) -> str:
-    """
-        This function finds the latest checkpoint file for a given model name in a specified directory path.
-
-        Args:
-        dir_path (str): The directory path where the checkpoint files are stored.
-        model_name (str): The name of the model to find the latest checkpoint for.
-
-        Returns:
-        str: The filename (including extension) of the latest checkpoint file found. If no matching checkpoint file
-          is found, returns an empty string.
-    """
     checkpoints = [f for f in os.listdir(dir_path) if f.endswith('.ckpt')]
     checkpoints_v = [f for f in checkpoints if re.match(r'^{}-v\d+.ckpt$'.format(model_name), f)]
     if checkpoints_v:
@@ -53,11 +44,12 @@ def find_latest_checkpoint(dir_path, model_name) -> str:
 
 ROOT_DIR = "C:/Users/stefan/Github/FER-app"
 FER_DATA_DIR = "C:/Users/stefan/Github/FER-app/data/ferplus/data"
-CHECKPOINT_NAME = find_latest_checkpoint(
-    dir_path=os.path.join(ROOT_DIR, "results/checkpoints"),
-    model_name="ferplus_litcnn"
-)
-LATEST_CHECKPOINT_PATH = os.path.join(ROOT_DIR, "results/checkpoints", CHECKPOINT_NAME)
+BEST_CHECKPOINT_NAME = "ferplus_litcnn-v18.ckpt"
+BEST_CHECKPOINT_PATH = os.path.join(ROOT_DIR, "results/checkpoints", BEST_CHECKPOINT_NAME)
+# LATEST_CHECKPOINT_NAME = find_latest_checkpoint(
+#     dir_path=os.path.join(ROOT_DIR, "results/checkpoints"),
+#     model_name="ferplus_litcnn"
+# )
 
 DEFAULT_TRAINING_ARGS = {
     "train_data_dir": f"{FER_DATA_DIR}/FER2013Train",
@@ -73,7 +65,7 @@ DEFAULT_TRAINING_ARGS = {
 
 DEFAULT_PREDICTION_ARGS = {
     'image_path': f"{ROOT_DIR}/data/ferplus/data/FER2013Test/fer0032222.png",
-    'checkpoint_path': f"{ROOT_DIR}/results/checkpoints/{CHECKPOINT_NAME}",
+    'checkpoint_path': f"{ROOT_DIR}/results/checkpoints/{BEST_CHECKPOINT_NAME}",
     "device": "cuda" if torch.cuda.is_available() else "cpu",
 }
 
@@ -213,7 +205,7 @@ class FERPlusDataset(Dataset):
                 transforms.ToTensor(),
                 # to grayscale
                 transforms.Grayscale(num_output_channels=1),
-                transforms.Resize(48),  # resize to 224x224
+                transforms.Resize((48, 48)),  # resize to 224x224
                 # stack grayscale image along channels dimension
                 # transforms.Lambda(lambda x: torch.stack([x[0], x[0], x[0]], dim=0)),
                 # transforms.Normalize(
@@ -441,3 +433,23 @@ def predict_emotion(model, image: torch.tensor, device=None):
     class_idx = output.numpy().argmax()
     emotion = lib.LABEL_DICT[class_idx]
     return emotion
+
+# **********************************************************************************************************************
+# Plotting
+# **********************************************************************************************************************
+
+
+def plot_images_with_predictions(image_paths: List[str], predictions: List[str]):
+    num_images = len(image_paths)
+    num_rows = num_images // 5 + 1 if num_images % 5 != 0 else num_images // 5
+    fig, axs = plt.subplots(num_rows, 5, figsize=(15, 5 * num_rows))
+    axs = axs.ravel()
+    for i, (image_path, prediction) in enumerate(zip(image_paths, predictions)):
+        image = Image.open(image_path)
+        axs[i].imshow(image, cmap="gray")
+        axs[i].set_title(f"Predicted: {prediction}")
+        axs[i].axis("off")
+    for i in range(num_images, num_rows * 5):
+        axs[i].axis("off")
+    plt.tight_layout()
+    plt.show()

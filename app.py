@@ -14,9 +14,11 @@ def main():
         st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
 
         image_array = np.array(Image.open(uploaded_file))
+        st.write(f"RAW Prediction: {prediction}")
+
         prediction = prediction_module.main(
             image=image_array,
-            checkpoint_path=lib.LATEST_CHECKPOINT_PATH,
+            checkpoint_path=lib.BEST_CHECKPOINT_PATH,
             device='cpu')
 
         st.write(f"Predicted emotion: {prediction}")
